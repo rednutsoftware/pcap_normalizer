@@ -1,7 +1,7 @@
 # Name
 pcap_normalizer --- normalize pcap file information
 
-# Synopsys
+# Synopsis
 ```
   pcap_normalizer infile outfile
 ```
