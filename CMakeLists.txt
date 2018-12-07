@@ -1,3 +1,5 @@
+project( pcap_normalizer C )
+
 add_executable( pcap_normalizer
 	pcap_normalizer.c )
 
