@@ -1,13 +1,16 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <pcap.h>
 
-static int s_normalize( const char *in_file, const char *out_file );
+static int s_normalize(
+	const char *in_file, const char *out_file, long long add_usec );
 
 int main( int argc, char *argv[] )
 {
 	int i;
 	char *in_file;
 	char *out_file;
+	long long add_usec;
 
 	for ( i = 0; i < argc; i++ )
 	{
@@ -32,12 +35,22 @@ int main( int argc, char *argv[] )
 		out_file = "out.pcap";
 	}
 
-	s_normalize( in_file, out_file );
+	if ( argc > 3 )
+	{
+		add_usec = strtoll( argv[ 3 ], NULL, 10 );
+	}
+	else
+	{
+		add_usec = 1000;	/* 1msec */
+	}
+
+	s_normalize( in_file, out_file, add_usec );
 
 	return 0;
 }
 
-static int s_normalize( const char *in_file, const char *out_file )
+static int s_normalize(
+	const char *in_file, const char *out_file, long long add_usec )
 {
 	char errbuf[ PCAP_ERRBUF_SIZE ];
 	pcap_t *in_pcap;
@@ -48,7 +61,8 @@ static int s_normalize( const char *in_file, const char *out_file )
 	struct timeval tv;
 	struct timeval tv_add;
 
-	printf( "in[%s] ==> out[%s]\n", in_file, out_file );
+	printf( "in[%s] ==> out[%s], between pkt [%lld.%06lld]sec\n",
+			in_file, out_file, add_usec / 1000000, add_usec % 1000000 );
 
 	in_pcap = pcap_open_offline( in_file, errbuf );
 	if ( in_pcap == NULL )
@@ -68,8 +82,9 @@ static int s_normalize( const char *in_file, const char *out_file )
 
 	tv.tv_sec = 946684800;		/* 2000/01/01 00:00:00 UTC */
 	tv.tv_usec = 0;
-	tv_add.tv_sec = 0;
-	tv_add.tv_usec = 1000;		/* 1msec = 1000pps */
+	tv_add.tv_sec = add_usec / ( 1000 * 1000 );
+	tv_add.tv_usec = add_usec % ( 1000 * 1000 );
+
 	while ( ( data = pcap_next( in_pcap, &hdr ) ) != NULL )
 	{
 		hdr.ts = tv;
